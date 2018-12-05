@@ -1,0 +1,84 @@
+x-service:
+  &default-service
+  restart: always
+  env_file:
+    - ../confs/fixed.env
+    - ../.env
+  networks:
+    app_network:
+
+x-app:
+  &default-app
+  <<: *default-service
+  <<: *db
+  working_dir: /app/clientes/${APP_NAME}/
+  image: yeboyebo/ybapp:v1.0
+  volumes:
+    - ${AQNEXT_PATH}:/app
+
+x-django:
+  &django
+  <<: *default-app
+  container_name: ${PROJECT_NAME}_django
+  ports:
+    - "24100"
+  command: /usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:24100 AQNEXT.wsgi:application
+
+x-nginx:
+  &nginx
+  <<: *default-service
+  container_name: ${PROJECT_NAME}_nginx
+  image: nginx:latest
+  volumes:
+    - ${AQNEXT_PATH}:/app
+    - ../confs/nginx.conf:/etc/nginx/conf.d/nginx.template
+  ports:
+    - "${NGINX_BINDING_PORT}80"
+  networks:
+    app_network:
+      ipv4_address: 172.${DOCKER_IP}.0.10
+  command: /app/motor/wait.sh django:24100 -- /bin/bash -c "envsubst '$${APP_NAME}' < /etc/nginx/conf.d/nginx.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+
+x-postgres:
+  &postgres
+  <<: *default-service
+  container_name: ${PROJECT_NAME}_postgres
+  image: postgres:9.5
+  volumes:
+    - ../db-manage/data:/var/lib/postgresql/data
+  ports:
+    - "5432"
+
+x-rabbitmq:
+  &rabbitmq
+  <<: *default-service
+  container_name: ${PROJECT_NAME}_rabbitmq
+  image: rabbitmq:latest
+
+x-rabbitmq_celery:
+  &rabbitmq_celery
+  <<: *rabbitmq
+  container_name: ${PROJECT_NAME}_rabbitmq_celery
+
+x-rabbitmq_daphne:
+  &rabbitmq_daphne
+  <<: *rabbitmq
+  container_name: ${PROJECT_NAME}_rabbitmq_daphne
+
+x-celery:
+  &celery
+  <<: *default-app
+  container_name: ${PROJECT_NAME}_celery
+  command: /app/motor/wait.sh rabbitmq_celery:5672 -- /usr/local/bin/celery -A AQNEXT.celery worker --loglevel=INFO --concurrency=10 -n worker1@%h -B -Ofair
+
+x-daphne:
+  &daphne
+  <<: *django
+  container_name: ${PROJECT_NAME}_daphne
+  command: /app/motor/wait.sh rabbitmq_daphne:5672 -- /usr/local/bin/daphne -b 0.0.0.0 -p 24100 AQNEXT.asgi:channel_layer
+
+x-worker:
+  &worker
+  <<: *default-app
+  container_name: ${PROJECT_NAME}_worker
+  command: /app/motor/wait.sh rabbitmq_daphne:5672 -- python manage.py runworker
