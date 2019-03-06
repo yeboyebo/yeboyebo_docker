@@ -12,7 +12,7 @@ x-app:
   <<: *default-service
   <<: *db
   working_dir: /app/clientes/${APP_NAME}/
-  image: yeboyebo/ybapp:v1.1
+  image: yeboyebo/ybapp:v1.2
   volumes:
     - ${AQNEXT_PATH}:/app
 
