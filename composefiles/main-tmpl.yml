@@ -28,14 +28,6 @@ x-rabbitmq:
   container_name: ${PROJECT_NAME}_rabbitmq
   image: rabbitmq:latest
 
-x-django:
-  &django
-  <<: *default-app
-  container_name: ${PROJECT_NAME}_django
-  ports:
-    - "24100"
-  command: /usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:24100 AQNEXT.wsgi:application
-
 x-postgres:
   &postgres
   <<: *default-service

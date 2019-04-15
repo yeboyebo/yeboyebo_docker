@@ -43,6 +43,8 @@ if [ $1 = "compose" ]
         if [ ! -z $DAPHNE ] && [ $DAPHNE = true ]
             then
                 cat $composedir/daphne-tmpl.yml >> "$composefile"
+        else
+            cat $composedir/django-tmpl.yml >> "$composefile"
         fi
 
         if [ ! -z $CELERY ] && [ $CELERY = true ]
