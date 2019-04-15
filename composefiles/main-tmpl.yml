@@ -1,0 +1,56 @@
+x-service:
+  &default-service
+  restart: always
+  env_file:
+    - ../confs/fixed.env
+    - ../.env
+  networks:
+    app_network:
+
+x-nginx:
+  &nginx
+  <<: *default-service
+  container_name: ${PROJECT_NAME}_nginx
+  image: nginx:latest
+  volumes:
+    - ${AQNEXT_PATH}:/app
+    - ../confs/nginx.conf:/etc/nginx/conf.d/nginx.template
+  ports:
+    - "${NGINX_BINDING_PORT}80"
+  networks:
+    app_network:
+      ipv4_address: 172.${DOCKER_IP}.0.10
+  command: /app/motor/wait.sh django:24100 -- /bin/bash -c "envsubst '$${APP_NAME}' < /etc/nginx/conf.d/nginx.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+
+x-rabbitmq:
+  &rabbitmq
+  <<: *default-service
+  container_name: ${PROJECT_NAME}_rabbitmq
+  image: rabbitmq:latest
+
+x-django:
+  &django
+  <<: *default-app
+  container_name: ${PROJECT_NAME}_django
+  ports:
+    - "24100"
+  command: /usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:24100 AQNEXT.wsgi:application
+
+x-postgres:
+  &postgres
+  <<: *default-service
+  container_name: ${PROJECT_NAME}_postgres
+  image: postgres:9.5
+  volumes:
+    - ../db-manage/data:/var/lib/postgresql/data
+  ports:
+    - "5432"
+
+x-app:
+  &default-app
+  <<: *default-service
+  <<: *db
+  working_dir: /app/clientes/${APP_NAME}/
+  image: yeboyebo/ybapp:v1.2
+  volumes:
+    - ${AQNEXT_PATH}:/app

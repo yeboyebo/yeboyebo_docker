@@ -1,0 +1,11 @@
+
+x-celery:
+  &celery
+  <<: *default-app
+  container_name: ${PROJECT_NAME}_celery
+  command: /app/motor/wait.sh rabbitmq_celery:5672 -- /usr/local/bin/celery -A AQNEXT.celery worker --loglevel=INFO --concurrency=10 -n worker1@%h -B -Ofair
+
+x-rabbitmq_celery:
+  &rabbitmq_celery
+  <<: *rabbitmq
+  container_name: ${PROJECT_NAME}_rabbitmq_celery

@@ -15,44 +15,28 @@ if [ $1 = "compose" ]
         echo "version: '3.4'" >> "$composefile"
         echo "" >> "$composefile"
 
-        # Insertamos template db segun el tipo de BD
+        # Insertamos template db
         echo "x-db:" >> "$composefile"
         echo "  &db" >> "$composefile"
         if [ ! -z $DB ] && [ $DB = "internal" ]
             then
                 echo "  depends_on:" >> "$composefile"
                 echo "    - postgres" >> "$composefile"
+                echo "" >> "$composefile"
         else
             echo "  extra_hosts:" >> "$composefile"
             for host in ${DB//,/ }
             do
                 echo "    - '$host:\${EXTERNAL_IP_$host}'" >> "$composefile"
             done
+            echo "" >> "$composefile"
         fi
 
         # Insertamos resto de templates
-        cat $composedir/main-tmpl.yml >> "$composefile"
-
-        for external_volume in ${EXTERNAL_VOLUMES//,/ }
-        do
-            echo "    - $external_volume" >> "$composefile"
-        done
-
-        # Aqui habria que ver si hay mas volumenes y añadirlos
-
-        if [ ! -z $DAPHNE ] && [ $DAPHNE = true ]
-            then
-                cat $composedir/daphne-tmpl.yml >> "$composefile"
-        fi
-
-        if [ ! -z $CELERY ] && [ $CELERY = true ]
-            then
-                cat $composedir/celery-tmpl.yml >> "$composefile"
-        fi
-
+        cat $composedir/templates.yml >> "$composefile"
+        echo "" >> "$composefile"     
 
         # Comenzamos a insertar los servicios
-        echo "" >> "$composefile"
         echo "services:" >> "$composefile"
         echo "" >> "$composefile"
 

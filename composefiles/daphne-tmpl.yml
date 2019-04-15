@@ -1,0 +1,17 @@
+
+x-daphne:
+  &daphne
+  <<: *django
+  container_name: ${PROJECT_NAME}_daphne
+  command: /app/motor/wait.sh rabbitmq_daphne:5672 -- /usr/local/bin/daphne -b 0.0.0.0 -p 24100 AQNEXT.asgi:channel_layer
+
+x-rabbitmq_daphne:
+  &rabbitmq_daphne
+  <<: *rabbitmq
+  container_name: ${PROJECT_NAME}_rabbitmq_daphne
+
+x-worker:
+  &worker
+  <<: *default-app
+  container_name: ${PROJECT_NAME}_worker
+  command: /app/motor/wait.sh rabbitmq_daphne:5672 -- python manage.py runworker
