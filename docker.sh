@@ -33,18 +33,25 @@ if [ $1 = "compose" ]
         # Insertamos resto de templates
         cat $composedir/main-tmpl.yml >> "$composefile"
 
+        # Metemos los volumenes externos en app
         for external_volume in ${EXTERNAL_VOLUMES//,/ }
         do
             echo "    - $external_volume" >> "$composefile"
         done
 
-        # Aqui habria que ver si hay mas volumenes y añadirlos
+        cat $composedir/nginx-tmpl.yml >> "$composefile"
+
+        # Metemos los volumenes externos en nginx
+        for external_volume in ${EXTERNAL_VOLUMES//,/ }
+        do
+            echo "    - $external_volume" >> "$composefile"
+        done
+
+        cat $composedir/django-tmpl.yml >> "$composefile"
 
         if [ ! -z $DAPHNE ] && [ $DAPHNE = true ]
             then
                 cat $composedir/daphne-tmpl.yml >> "$composefile"
-        else
-            cat $composedir/django-tmpl.yml >> "$composefile"
         fi
 
         if [ ! -z $CELERY ] && [ $CELERY = true ]
