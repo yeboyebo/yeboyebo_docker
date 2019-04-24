@@ -29,6 +29,7 @@ if [ $1 = "compose" ]
                 echo "    - '$host:\${EXTERNAL_IP_$host}'" >> "$composefile"
             done
         fi
+        echo "" >> "$composefile"
 
         # Insertamos resto de templates
         cat $composedir/main-tmpl.yml >> "$composefile"
@@ -38,6 +39,7 @@ if [ $1 = "compose" ]
         do
             echo "    - $external_volume" >> "$composefile"
         done
+        echo "" >> "$composefile"
 
         cat $composedir/nginx-tmpl.yml >> "$composefile"
 
@@ -46,6 +48,7 @@ if [ $1 = "compose" ]
         do
             echo "    - $external_volume" >> "$composefile"
         done
+        echo "" >> "$composefile"
 
         cat $composedir/django-tmpl.yml >> "$composefile"
 

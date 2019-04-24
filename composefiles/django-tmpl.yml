@@ -1,4 +1,3 @@
-
 x-django:
   &django
   <<: *default-app
